@@ -1,5 +1,5 @@
 import usermodel from '../models/usermodel.js';
-import bcrypt from 'bcryptjs'
+import bcrypt, { hash } from 'bcryptjs'
 
 export const register=async(req,res)=>{
     try {
@@ -37,7 +37,7 @@ export const login=async(req,res)=>{
         //if we are getting null means user not exist may be email is wrong  (!user)-->true
         //if user exist we will {username,email,password...}.  --false
         if(!user){
-            
+
            return res.status(400).json({error:'user not found'});
         }
 
@@ -52,4 +52,71 @@ export const login=async(req,res)=>{
     } catch (error) {
         return res.status(500).json({error:'internal server error'+error.message});
     }
+}
+
+export const getallusers=async (req,res)=>{
+    try {
+        let users=await usermodel.find().select('-password');
+        return res.status(200).json({message:"users fetched successfully",users:users})
+    } catch (error) {
+        return res.status(500).json({error:"internal server error"+error})
+    }
+}
+
+export const updateuser=async (req,res)=>{
+    try {
+           let id=req.params.id;
+           if(!id){
+            return res.status(400).json({error:'id is required'});
+           }
+           if(req.body.password){
+            req.body.password=await bcrypt.hash(req.body.password,10)
+           }
+          let updateduser= await usermodel.findByIdAndUpdate(id,req.body);//old data not exist means null
+          if(!updateduser){
+            return res.status(404).json({error:"user not found updated failed"})
+          }
+          return res.status(200).json({message:"user updated successfully",user:updateduser})
+    } catch (error) {
+          return res.status(500).json({error:"internal server error"+error})
+    }
+}
+
+export const forgotpassword=async (req,res)=>{
+    try {
+        let id=req.params.id;
+        if(!id){
+            return res.status(400).json({error:'id is required'});
+        }
+        let user=await usermodel.findById(id);
+        if(!user){
+            return res.status(404).json({error:"user not found"})
+        }
+        if(!req.body.password){
+            return res.status(400).json({error:'password is required'});
+        }
+        let hashedpassword=await bcrypt.hash(req.body.password,10);
+        let updateduser={...user,password:hashedpassword}
+        updateduser= await usermodel.findByIdAndUpdate(id,updateduser);//old data not exist means null
+        return res.status(200).json({message:"user updated successfully",user:updateduser})
+    } catch (error) {
+        return res.status(500).json({error:"internal server error"+error})
+    }
+}
+
+export const deleteuser=async(req,res)=>{
+   try {
+     const id=req.params.id;
+     if(!id){
+         return res.status(400).json({error:'id is required'});
+     }
+     let deleteduser=await usermodel.findByIdAndDelete(id);
+     if(!deleteduser){
+        return res.status(404).json({error:"user not found deleted failed"})
+     }
+
+     return res.status(200).json({message:"user deleted successfully",user:deleteduser})
+   } catch (error) {
+    
+   }
 }
