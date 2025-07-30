@@ -30,10 +30,7 @@ const jobschema = new mongoose.Schema({
         type: String, 
         required: true 
     },
-    requireddegree: { 
-        type: String,
-         required: true 
-        },
+    requireddegree:[],
     company: { 
         type: String, 
         required: true 
@@ -44,6 +41,7 @@ const jobschema = new mongoose.Schema({
         required: true 
     },
     requiredskills: [],
+    userid:{type:mongoose.Schema.Types.ObjectId,ref:"users"},
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
 })

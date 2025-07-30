@@ -120,3 +120,4 @@ export const deleteuser=async(req,res)=>{
     
    }
 }
+
