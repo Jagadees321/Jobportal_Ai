@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import jobmodel from "../models/jobsmodel.js";
 import usermodel from "../models/usermodel.js";
 
@@ -29,6 +30,7 @@ export const postjob=async(req,res)=>{
     }
 }
 
+
 export const getalljobs=async(req,res)=>{
     try {
         const jobs=await jobmodel.find();
@@ -51,5 +53,43 @@ export const getjobbyid=async(req,res)=>{
         return res.status(200).json({message:"job fetched",job:job})
     } catch (error) {
          return res.status(500).json({error:'internal server error'+error.message});
+    }
+}
+
+
+
+export  const updatejob=async(req,res)=>{
+    try {
+       let jobid=req.params.id;
+       let adminid=req.params.adminid;
+       if(!jobid || !adminid){
+        return res.status(400).json({error:"id,adminid missing in params"})
+       }
+       //how is admin or not
+       let userdetails=await usermodel.findById(adminid);//null
+       if(!userdetails){
+        return res.status(404).json({error:"user not found"})  
+       }
+      if(userdetails.isadmin!==true){
+        return res.status(400).json({error:"only admin can update jobs"})
+      }
+
+      //this admin and how posted that  particular job,we have to both or same or not 
+      let jobdetails=await jobmodel.findById(jobid);
+      if(!jobdetails){
+        return res.status(404).json({error:"job not found"})
+      }
+      
+      
+      
+      
+       
+      if(jobdetails.userid._id.toString()!==adminid){
+        return res.status(400).json({error:"only admin  how posted that have access"})
+      }
+      let updatedjob= await jobmodel.findByIdAndUpdate(jobid,req.body);//old data not exist means null
+      return res.status(200).json({message:"job updated successfully",job:updatedjob})
+    } catch (error) {
+        return res.status(500).json({error:'internal server error'+error.message});
     }
 }
