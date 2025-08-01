@@ -84,8 +84,16 @@ export const updateapplication=async(req,res)=>{
 export const deleteapplication=async(req,res)=>{
     try {
         let id=req.params.id;
+        if(!id){
+            return res.status(400).json({error:"id is required"})
+        }
+        let deletedapplication=await jobsapplicationmodel.findByIdAndDelete(id);
+        if(!deletedapplication){
+            return res.status(404).json({error:"application not found"})
+        }
+        return res.status(200).json({message:"application deleted successfully",application:deletedapplication})
     } catch (error) {
-        
+        return res.status(500).json({error:'internal server error'+error.message});
     }
 }
 
