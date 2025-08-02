@@ -8,7 +8,7 @@ const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || '9824252c60msh822bac04d7e2e36p1
 const RAPIDAPI_HOST = 'linkedin-job-search-api.p.rapidapi.com';
 
 // Fetch jobs from RapidAPI
-export const fetchJobsFromAPI = async (titleFilter = 'full stack', locationFilter = 'india') => {
+export const fetchJobsFromAPI = async (titleFilter = 'data science', locationFilter = 'india') => {
   try {
     const options = {
       method: 'GET',
@@ -36,6 +36,24 @@ const manualJobMapping = (apiJob) => {
   const employmentType = apiJob.employment_type?.[0] || 'FULL_TIME';
   const seniority = apiJob.seniority || 'Mid-Senior level';
   
+  // Extract apply link from various possible fields
+  const extractApplyLink = (job) => {
+    return job.url || 
+           job.orgLink || 
+           job.applyUrl || 
+           job.apply_link || 
+           job.applicationUrl || 
+           job.application_url || 
+           job.linkedinUrl || 
+           job.linkedin_url ||
+           job.externalUrl ||
+           job.external_url ||
+           job.jobUrl ||
+           job.job_url ||
+           `https://www.linkedin.com/jobs/view/${job.id}` || // Fallback LinkedIn URL
+           '';
+  };
+  
   return {
     title: apiJob.title || 'No title provided',
     description: apiJob.linkedin_org_description || 
@@ -53,6 +71,7 @@ const manualJobMapping = (apiJob) => {
     company: apiJob.organization || 'Unknown company',
     shifts: 'Day', // Default to Day shift
     requiredskills: extractSkills(apiJob),
+    applyLink: extractApplyLink(apiJob),
     url: apiJob.url || '',
     remote: apiJob.remote_derived || false,
     postedDate: apiJob.date_posted ? new Date(apiJob.date_posted) : new Date(),
@@ -65,7 +84,13 @@ export const processJobWithAI = async (apiJob) => {
     const prompt = `Convert this LinkedIn job to standardized format with all required fields: ${JSON.stringify(apiJob)}. 
     Required fields: title, description, location, type (Full Time/Part Time/Internship), 
     minsalaryrange (number), maxsalaryrange (number), requiredexperience (text), 
-    company (text), shifts (Day/Night/Both). Return only valid JSON.`;
+    company (text), shifts (Day/Night/Both), applyLink (string).
+    
+    For applyLink, look for these fields in order: url, orgLink, applyUrl, apply_link, applicationUrl, 
+    application_url, linkedinUrl, linkedin_url, externalUrl, external_url, jobUrl, job_url.
+    If none found, use: "https://www.linkedin.com/jobs/view/[job_id]" or empty string.
+    
+    Return only valid JSON.`;
     
     const aiResponse = await generateFromGemini(prompt);
     
@@ -79,7 +104,7 @@ export const processJobWithAI = async (apiJob) => {
     try {
       const parsedJob = JSON.parse(cleanedResponse);
       
-      // Validate required fields
+      // Validate required fields (make applyLink optional for AI response)
       const requiredFields = ['title', 'description', 'location', 'type', 
                             'minsalaryrange', 'maxsalaryrange', 'requiredexperience', 
                             'company', 'shifts'];
@@ -89,6 +114,12 @@ export const processJobWithAI = async (apiJob) => {
           console.warn(`AI response missing ${field}, falling back to manual mapping`);
           return manualJobMapping(apiJob);
         }
+      }
+      
+      // Ensure applyLink is present (fallback to manual mapping if missing)
+      if (!parsedJob.applyLink) {
+        const manualMapped = manualJobMapping(apiJob);
+        parsedJob.applyLink = manualMapped.applyLink;
       }
       
       return parsedJob;
@@ -189,7 +220,7 @@ export const saveJobToDB = async (jobData, userId = null) => {
     // Ensure all required fields are present
     const requiredFields = ['title', 'description', 'location', 'type', 
                           'minsalaryrange', 'maxsalaryrange', 'requiredexperience', 
-                          'company', 'shifts'];
+                          'company', 'shifts', 'applyLink'];
     
     for (const field of requiredFields) {
       if (!jobData[field]) {
@@ -221,6 +252,7 @@ export const saveJobToDB = async (jobData, userId = null) => {
       company: jobData.company,
       shifts: jobData.shifts,
       requiredskills: jobData.requiredskills || [],
+      applyLink: jobData.applyLink,
       userid: userId,
       createdAt: new Date(),
       updatedAt: new Date()
