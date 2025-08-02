@@ -4,7 +4,7 @@ import Job from '../models/jobsmodel.js';
 import { generateFromGemini } from './geminiClient.js';
 
 const RAPIDAPI_URL = 'https://linkedin-job-search-api.p.rapidapi.com/active-jb-24h';
-const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || '';
+const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || '9824252c60msh822bac04d7e2e36p1a19cbjsnac788c8d03a7';
 const RAPIDAPI_HOST = 'linkedin-job-search-api.p.rapidapi.com';
 
 // Fetch jobs from RapidAPI
