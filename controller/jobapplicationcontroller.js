@@ -36,7 +36,7 @@ export const applyjob=async(req,res)=>{
 
             let mailinfo={
                 from:'yeddulajagadeesh11@gmail.com',
-                to:'jaggujagadesh85@gmail.com',
+                to:user.email,
                 subject:`job applied ${job.title}`,
                 html:`
                 <h1 style="color:yellow">${job.title}</h1>

@@ -3,8 +3,13 @@ import dotenv from "dotenv";
 import connectdb from "./db/dbconnect.js";
 import userrouter from './router/userroutes.js';
 import jobrouter from './router/jobsroutes.js';
-import jobapplictionrouter from './router/jobapplicationroutes.js'
-import cors from 'cors'
+import jobapplictionrouter from './router/jobapplicationroutes.js';
+import {fetchJobsFromAPI,
+  processJobWithAI,
+  saveJobToDB,
+  fetchProcessAndStoreJobs} from './services/services.js';
+import cors from 'cors';
+import cron from 'node-cron'
 const app = express();
 dotenv.config();//load env variables
 connectdb(); 
@@ -17,6 +22,11 @@ app.get('/',(req,res)=>{
 })
 app.get('/api/home',(req,res)=>{
     res.status(200).send("Home page route checking");
+})
+cron.schedule('* * * * *', async() => {
+    
+     const results = await fetchProcessAndStoreJobs('6889ee4896956f2ca0c9a512');
+    console.log('running a task every 1 min');
 })
 //ROUTES
 app.use('/api',userrouter)

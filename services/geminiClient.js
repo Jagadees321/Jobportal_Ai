@@ -24,3 +24,26 @@ export const generateFromGemini = async (prompt) => {
     throw new Error('Failed to generate content from Gemini API');
   }
 };
+
+export const generateFromansgemini = async (prompt) => {
+ const requestBody = {
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: {
+      response_mime_type: "text/plain" // Request JSON response
+    }
+  };
+
+  try {
+    const response = await axios.post(GEMINI_API_URL, requestBody);
+    console.log(response.data.candidates?.[0]?.content.parts[0]?.text);
+    
+    return response.data.candidates?.[0]?.content.parts[0]?.text || 'nothing';
+  } catch (error) {
+    console.error('Gemini API error:', error.response?.data || error.message);
+    throw new Error('Failed to generate content from Gemini API');
+  }
+};
+
+
+
+

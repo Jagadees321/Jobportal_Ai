@@ -4,7 +4,8 @@ import usermodel from "../models/usermodel.js";
 import {fetchJobsFromAPI,
   processJobWithAI,
   saveJobToDB,
-  fetchProcessAndStoreJobs} from '../services/services.js'
+  fetchProcessAndStoreJobs} from '../services/services.js';
+  import { generateFromansgemini } from "../services/geminiClient.js";
 export const postjob=async(req,res)=>{
     try {
         const adminid=req.params.adminid;
@@ -151,3 +152,18 @@ export const importJobs = async (req, res) => {
     });
   }
 };
+
+
+export const askquestion=async(req,res)=>{
+    try {
+        let que=req.body.question;
+        let data=req.body.data;
+        let prompt=`I want to ask you a question. The question is: ${que}. you should ans from my data ${data}`;
+        let ans=await generateFromansgemini(prompt);
+        console.log(ans);
+        
+        return res.status(200).json({message:"question asked successfully",answer:ans})
+    } catch (error) {
+        return res.status(500).json({error:'internal server error'+error.message});
+    }
+}
