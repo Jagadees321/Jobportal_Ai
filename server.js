@@ -9,8 +9,8 @@ const app = express();
 dotenv.config();//load env variables
 connectdb(); 
 //MIDDLEWARES
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cors());
 app.get('/',(req,res)=>{
     res.status(200).send("server is running fine");
